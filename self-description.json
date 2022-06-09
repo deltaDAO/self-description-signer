@@ -1,29 +1,34 @@
 {
-  "selfDescription": {
-      "@context": {
-          "sh": "http://www.w3.org/ns/shacl#",
-          "xsd": "http://www.w3.org/2001/XMLSchema#",
-          "gx-participant": "http://w3id.org/gaia-x/participant#"
-      },
-      "@id": "http://example.org/participant-dp6gtq7i75lmk9p4j2tfg",
-      "@type": "gx-participant:LegalPerson",
-      "gx-participant:registrationNumber": {
-          "@type": "xsd:string",
-          "@value": "DEANY1234NUMBER"
-      },
-      "gx-participant:headquarterAddress": {
-          "@type": "gx-participant:Address",
-          "gx-participant:country": {
-              "@type": "xsd:string",
-              "@value": "DEU"
-          }
-      },
-      "gx-participant:legalAddress": {
-          "@type": "gx-participant:Address",
-          "gx-participant:country": {
-              "@type": "xsd:string",
-              "@value": "DEU"
-          }
-      }
-  }
+    "selfDescription": {
+        "@context": {
+            "sh": "http://www.w3.org/ns/shacl#",
+            "xsd": "http://www.w3.org/2001/XMLSchema#",
+            "gx-resource": "http://w3id.org/gaia-x/resource#",
+            "gx-participant": "http://w3id.org/gaia-x/participant#",
+            "gx-service-offering": "http://w3id.org/gaia-x/service-offering#"
+        },
+        "@type": "gx-service-offering:ServiceOffering",
+        "@id": "http://example.org/service-offering-1",
+        "gx-service-offering:providedBy": {
+            "@type": "xsd:string",
+            "@value": "http://example.org/legal-person-1-sd"
+        },
+        "gx-service-offering:termsAndConditions": [
+            {
+                "@type": "gx-service-offering:TermsAndConditions",
+                "gx-service-offering:url": "https://example.org/terms",
+                "gx-service-offering:hash": "myrandomhash"
+            }
+        ],
+        "gx-service-offering:aggregationOf": [
+            {
+                "@type": "xsd:string",
+                "@value": "http://example.org/virtual-resource-sd-1"
+            },
+            {
+                "@type": "xsd:string",
+                "@value": "http://example.org/physical-resource-sd-1"
+            }
+        ]
+    }
 }
