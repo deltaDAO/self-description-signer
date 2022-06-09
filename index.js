@@ -47,6 +47,7 @@ function createProof(jws) {
     type: "RsaSignature2018",
     created: new Date().toISOString(),
     proofPurpose: "assertionMethod",
+    verificationMethod: 'did:web:compliance.lab.gaia-x.eu',
     jws
   }
 
@@ -54,7 +55,7 @@ function createProof(jws) {
 }
 
 function saveResult(selfDescription, proof) {
-  const content = { selfDescriptionCredential: { selfDescription, proof } }
+  const content =  { selfDescription, proof }
   const data = JSON.stringify(content, null, 2);
   const filename = "sd-" + new Date().getTime() + ".json"
 
