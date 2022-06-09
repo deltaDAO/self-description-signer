@@ -1,0 +1,24 @@
+{
+  "name": "self-description-signer",
+  "version": "1.0.0",
+  "description": "A simple script to sign gaia-x self descriptions using a x509 certificate",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/deltaDAO/self-description-signer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/deltaDAO/self-description-signer/issues"
+  },
+  "homepage": "https://github.com/deltaDAO/self-description-signer#readme",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "dotenv": "^16.0.1",
+    "jose": "^4.8.1"
+  }
+}
