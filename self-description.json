@@ -1,0 +1,29 @@
+{
+  "selfDescription": {
+      "@context": {
+          "sh": "http://www.w3.org/ns/shacl#",
+          "xsd": "http://www.w3.org/2001/XMLSchema#",
+          "gx-participant": "http://w3id.org/gaia-x/participant#"
+      },
+      "@id": "http://example.org/participant-dp6gtq7i75lmk9p4j2tfg",
+      "@type": "gx-participant:LegalPerson",
+      "gx-participant:registrationNumber": {
+          "@type": "xsd:string",
+          "@value": "DEANY1234NUMBER"
+      },
+      "gx-participant:headquarterAddress": {
+          "@type": "gx-participant:Address",
+          "gx-participant:country": {
+              "@type": "xsd:string",
+              "@value": "DEU"
+          }
+      },
+      "gx-participant:legalAddress": {
+          "@type": "gx-participant:Address",
+          "gx-participant:country": {
+              "@type": "xsd:string",
+              "@value": "DEU"
+          }
+      }
+  }
+}

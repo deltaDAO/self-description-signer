@@ -1,0 +1,5 @@
+.env
+node_modules/
+*.pem
+*.json
+!self-description.json
