@@ -3,3 +3,5 @@ node_modules/
 *.pem
 *.json
 !self-description.json
+!package.json
+!package-lock.json
