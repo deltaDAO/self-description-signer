@@ -44,7 +44,7 @@ async function canonize(selfDescription) {
 
 function createProof(jws) {
   const proof = {
-    type: "RsaSignature2018",
+    type: "JsonWebKey2020",
     created: new Date().toISOString(),
     proofPurpose: "assertionMethod",
     verificationMethod: 'did:web:compliance.lab.gaia-x.eu',

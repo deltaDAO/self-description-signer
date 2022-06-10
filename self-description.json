@@ -11,7 +11,7 @@
         "@id": "http://example.org/service-offering-1",
         "gx-service-offering:providedBy": {
             "@type": "xsd:string",
-            "@value": "http://example.org/legal-person-1-sd"
+            "@value": "https://raw.githubusercontent.com/deltaDAO/files/main/paritcipant-v1-signed-sd.json"
         },
         "gx-service-offering:termsAndConditions": [
             {
