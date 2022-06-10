@@ -1,22 +1,21 @@
-const crypto = require('crypto')
-const jose = require('jose')
-const dotenv = require('dotenv')
-const { selfDescription } = require('./self-description.json')
-const axios = require('axios')
-const fs = require('fs')
-
 require('dotenv').config()
 
-async function verify(jws) {
-  const algorithm = 'PS256'
-  const ecPublicKey = await jose.importX509(process.env.publicKey, algorithm)
-  try {
-    const result = await jose.compactVerify(jws, ecPublicKey)
+const axios = require('axios')
+const crypto = require('crypto')
+const fs = require('fs').promises
+const jose = require('jose')
 
-    return { protectedHeader: result.protectedHeader, content: new TextDecoder().decode(result.payload) }
-  } catch (error) {
-    return {}
-  }
+const { selfDescription } = require('./self-description.json')
+
+async function canonize(selfDescription) {
+  const url = 'https://compliance.lab.gaia-x.eu/api/v1/normalize'
+  const { data } = await axios.post(url, { selfDescription })
+
+  return data
+}
+
+function sha256(input) {
+  return crypto.createHash('sha256').update(input).digest('hex')
 }
 
 async function sign(hash) {
@@ -30,55 +29,58 @@ async function sign(hash) {
   return jws
 }
 
-function sha256(input) {
-  return crypto.createHash('sha256').update(input).digest('hex')
-}
-
-async function canonize(selfDescription) {
-  const url = 'https://compliance.lab.gaia-x.eu/api/v1/normalize'
-  const json = JSON.stringify({ selfDescription });
-  return axios.post(url, { selfDescription })
-    .then(res => res.data)
-    .catch(err => console.error(err))
-}
-
-function createProof(jws) {
+async function createProof(hash) {
   const proof = {
-    type: "JsonWebKey2020",
+    type: 'JsonWebKey2020',
     created: new Date().toISOString(),
-    proofPurpose: "assertionMethod",
-    verificationMethod: 'did:web:compliance.lab.gaia-x.eu',
-    jws
+    proofPurpose: 'assertionMethod',
+    verificationMethod: process.env.verificationMethod ?? 'did:web:compliance.lab.gaia-x.eu',
+    jws: await sign(hash)
   }
 
   return proof
 }
 
-function saveResult(selfDescription, proof) {
-  const content =  { selfDescription, proof }
-  const data = JSON.stringify(content, null, 2);
-  const filename = "sd-" + new Date().getTime() + ".json"
+async function verify(jws) {
+  const algorithm = 'PS256'
+  const x509 = await jose.importX509(process.env.publicKey, algorithm)
+  try {
+    const result = await jose.compactVerify(jws, x509)
 
-  fs.writeFile(filename, data, (err) => {
-    if (err) throw err;
-    console.log("📁", filename, "saved ")
-  });
-  
+    return { protectedHeader: result.protectedHeader, content: new TextDecoder().decode(result.payload) }
+  } catch (error) {
+    return {}
+  }
+}
+
+async function saveResultToFile(selfDescription, proof) {
+  const content = { selfDescription, proof }
+  const data = JSON.stringify(content, null, 2)
+  const filename = `${selfDescription['@type'].split(':')[0]}-${new Date().getTime()}.json`
+
+  await fs.writeFile(filename, data)
+
+  return filename
+}
+
+function logger(...msg) {
+  console.log(msg.join(" "))
 }
 
 async function main() {
   const canonizedSD = await canonize(selfDescription)
-  const hash = sha256(canonizedSD)
-  console.log("📈 hash", hash)
-
-  const jws = await sign(hash)
-  const proof = createProof(jws)
   
-  console.log("🔒 Proof created")
-  const verificationResult = await verify(jws.replace('..', `.${hash}.`))
-  console.log(verificationResult.content === hash ? "✅ Verification successful" : "❌ Verification failed")
+  const hash = sha256(canonizedSD)
+  logger(`📈 Hashed canonized SD ${hash}`)
 
-  saveResult(selfDescription, proof)
+  const proof = await createProof(hash)
+  logger(`🔒 Proof created (${process.env.verificationMethod})`)
+
+  const verificationResult = await verify(proof.jws.replace('..', `.${hash}.`))
+  logger(verificationResult?.content === hash ? '✅ Verification successful' : '❌ Verification failed')
+
+  const filename = await saveResultToFile(selfDescription, proof)
+  logger(`📁 ${filename} saved`)
 }
 
 main()

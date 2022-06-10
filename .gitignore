@@ -5,3 +5,4 @@ node_modules/
 !self-description.json
 !package.json
 !package-lock.json
+*DS_Store
