@@ -35,7 +35,7 @@ function sha256(input) {
 }
 
 async function canonize(selfDescription) {
-  const url = 'https://compliance.lab.gaia-x.eu/api/v1/participant/normalize'
+  const url = 'https://compliance.lab.gaia-x.eu/api/v1/normalize'
   const json = JSON.stringify({ selfDescription });
   return axios.post(url, { selfDescription })
     .then(res => res.data)
