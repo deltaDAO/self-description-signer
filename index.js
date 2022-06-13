@@ -20,7 +20,7 @@ function sha256(input) {
 
 async function sign(hash) {
   const algorithm = 'PS256'
-  const rsaPrivateKey = await jose.importPKCS8(process.env.privateKey, algorithm)
+  const rsaPrivateKey = await jose.importPKCS8(process.env.PRIVATE_KEY, algorithm)
 
   const jws = await new jose.CompactSign(new TextEncoder().encode(hash))
     .setProtectedHeader({ alg: 'PS256', b64: false, crit: ['b64'] })
@@ -34,7 +34,7 @@ async function createProof(hash) {
     type: 'JsonWebKey2020',
     created: new Date().toISOString(),
     proofPurpose: 'assertionMethod',
-    verificationMethod: process.env.verificationMethod ?? 'did:web:compliance.lab.gaia-x.eu',
+    verificationMethod: process.env.VERIFICATION_METHOD ?? 'did:web:compliance.lab.gaia-x.eu',
     jws: await sign(hash)
   }
 
@@ -43,7 +43,7 @@ async function createProof(hash) {
 
 async function verify(jws) {
   const algorithm = 'PS256'
-  const x509 = await jose.importX509(process.env.publicKey, algorithm)
+  const x509 = await jose.importX509(process.env.PUBLIC_KEY, algorithm)
   try {
     const result = await jose.compactVerify(jws, x509)
 
@@ -74,7 +74,7 @@ async function main() {
   logger(`📈 Hashed canonized SD ${hash}`)
 
   const proof = await createProof(hash)
-  logger(`🔒 Proof created (${process.env.verificationMethod})`)
+  logger(`🔒 Proof created (${process.env.VERIFICATION_METHOD ?? 'did:web:compliance.lab.gaia-x.eu'})`)
 
   const verificationResult = await verify(proof.jws.replace('..', `.${hash}.`))
   logger(verificationResult?.content === hash ? '✅ Verification successful' : '❌ Verification failed')
