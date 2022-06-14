@@ -7,7 +7,7 @@ const jose = require('jose')
 
 const { selfDescription } = require('./self-description.json')
 const currentTime = new Date().getTime()
-const BASE_URL = "https://compliance.gaia-x.eu"
+const BASE_URL = "https://compliance.lab.gaia-x.eu"
 
 async function canonize(selfDescription) {
   const URL = BASE_URL + '/api/v1/normalize'
