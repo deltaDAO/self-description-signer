@@ -4,6 +4,8 @@
 2. Create a new `.env` file with `PRIVATE_KEY`, `PUBLIC_KEY` and `VERIFICATION_METHOD` as properties. 
 3. Install dependencies `npm i` and execute the script `node index.js` (node@16 or higher required).
 4. The given self description will be signed and a new file containing self description + proof called `type-unixtimestamp.json` will be created.
+5. In addition, a did.json will be created based on the provided `PUBLIC_KEY` and `VERIFICATION_METHOD`
+6. Finally, the script asks the compliance service to sign the locally signed self description and verifies the final result against the compliance service.
 
 ## How it Works
 1. The given Self Description is canonized with [URDNA2015](https://json-ld.github.io/rdf-dataset-canonicalization/spec/)
