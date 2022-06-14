@@ -59,13 +59,12 @@ async function verify(jws) {
   }
 }
 
-async function createSignedSdFile(selfDescription, proof, complianceCredential) {
-  const content = complianceCredential ?
-    { selfDescriptionCredential: { selfDescription, proof }, complianceCredential: complianceCredential }
-    : { selfDescription, proof }
-  const type = complianceCredential ? "complete" : "self-signed"
+async function createSignedSdFile(selfDescription, proof) {
+  const content = proof ? { selfDescription, proof } : selfDescription
+  const status = proof ? "self-signed" : "complete"
+  const type = proof ? selfDescription['@type'].split(':')[0] : selfDescription.selfDescriptionCredential.selfDescription['@type'].split(':')[0]
   const data = JSON.stringify(content, null, 2)
-  const filename = `${currentTime}_${type}_${selfDescription['@type'].split(':')[0]}.json`
+  const filename = `${currentTime}_${status}_${type}.json`
 
   await fs.writeFile(filename, data)
 
@@ -111,15 +110,15 @@ async function signSd(selfDescription, proof) {
   return data
 }
 
-async function verifySelfDescription(selfDescription, proof, complianceCredential) {
+async function verifySelfDescription(selfDescription) {
   const URL = BASE_URL + "/api/v1/participant/verify/raw"
   try {
-  const { data } = await axios.post(URL, { selfDescriptionCredential: { selfDescription, proof }, complianceCredential: complianceCredential })
+    const { data } = await axios.post(URL, selfDescription)
 
-  return data
-} catch (error) {
-  return {}
-}
+    return data
+  } catch (error) {
+    return {}
+  }
 }
 
 async function main() {
@@ -129,7 +128,7 @@ async function main() {
   logger(`📈 Hashed canonized SD ${hash}`)
 
   const proof = await createProof(hash)
-  logger(`🔒 Proof created (${process.env.VERIFICATION_METHOD ?? 'did:web:compliance.lab.gaia-x.eu'})`)
+  logger(proof ? '🔒 SD signed successfully (local)' : '❌ SD signing failed (local)')
 
   const verificationResult = await verify(proof.jws.replace('..', `.${hash}.`))
   logger(verificationResult?.content === hash ? '✅ Verification successful (local)' : '❌ Verification failed (local)')
@@ -138,18 +137,19 @@ async function main() {
   logger(`📁 ${filenameSignedSd} saved`)
 
   const filenameDid = await createDIDFile()
-  logger(`📁 ${filenameDid} saved`)
+  logger(`📁 ${filenameDid} saved`, "\n")
 
   const complianceCredential = await signSd(selfDescription, proof)
-  logger(complianceCredential ? '✅ SD signed successfully (compliance service)' : '❌ SD signing failed (compliance service)')
+  logger(complianceCredential ? '🔒 SD signed successfully (compliance service)' : '❌ SD signing failed (compliance service)')
 
   if (complianceCredential) {
-    const filenameCompleteSd = await createSignedSdFile(selfDescription, proof, complianceCredential)
-    logger(`📁 ${filenameCompleteSd} saved`)
+    const completeSd = { selfDescriptionCredential: { selfDescription, proof }, complianceCredential: complianceCredential.complianceCredential }
 
-    const verificationResultRemote = await verifySelfDescription( selfDescription, proof, complianceCredential)
+    const verificationResultRemote = await verifySelfDescription(completeSd)
     logger(verificationResultRemote?.conforms === true ? '✅ Verification successful (compliance service)' : '❌ Verification failed (compliance service)')
 
+    const filenameCompleteSd = await createSignedSdFile(completeSd)
+    logger(`📁 ${filenameCompleteSd} saved`)
   }
 }
 
