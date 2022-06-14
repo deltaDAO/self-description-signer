@@ -45,7 +45,7 @@ async function createProof(hash) {
 
 async function verify(jws) {
   const algorithm = 'PS256'
-  const x509 = await jose.importX509(process.env.PUBLIC_KEY, algorithm)
+  const x509 = await jose.importX509(process.env.CERTIFICATE, algorithm)
   const publicKeyJwk = await jose.exportJWK(x509)
 
   const pubkey = await jose.importJWK(publicKeyJwk, 'PS256')
@@ -73,7 +73,7 @@ async function createSignedSdFile(selfDescription, proof) {
 
 async function createDIDFile() {
   const algorithm = 'PS256'
-  const x509 = await jose.importX509(process.env.PUBLIC_KEY, algorithm)
+  const x509 = await jose.importX509(process.env.CERTIFICATE, algorithm)
   const publicKeyJwk = await jose.exportJWK(x509)
   publicKeyJwk.alg = algorithm
 
@@ -138,18 +138,23 @@ async function main() {
 
   const filenameDid = await createDIDFile()
   logger(`📁 ${filenameDid} saved`, "\n")
+  
+  // the following code only works if you hosted your created did.json
+  try {
+    const complianceCredential = await signSd(selfDescription, proof)
+    logger(complianceCredential ? '🔒 SD signed successfully (compliance service)' : '❌ SD signing failed (compliance service)')
 
-  const complianceCredential = await signSd(selfDescription, proof)
-  logger(complianceCredential ? '🔒 SD signed successfully (compliance service)' : '❌ SD signing failed (compliance service)')
+    if (complianceCredential) {
+      const completeSd = { selfDescriptionCredential: { selfDescription, proof }, complianceCredential: complianceCredential.complianceCredential }
 
-  if (complianceCredential) {
-    const completeSd = { selfDescriptionCredential: { selfDescription, proof }, complianceCredential: complianceCredential.complianceCredential }
+      const verificationResultRemote = await verifySelfDescription(completeSd)
+      logger(verificationResultRemote?.conforms === true ? '✅ Verification successful (compliance service)' : '❌ Verification failed (compliance service)')
 
-    const verificationResultRemote = await verifySelfDescription(completeSd)
-    logger(verificationResultRemote?.conforms === true ? '✅ Verification successful (compliance service)' : '❌ Verification failed (compliance service)')
-
-    const filenameCompleteSd = await createSignedSdFile(completeSd)
-    logger(`📁 ${filenameCompleteSd} saved`)
+      const filenameCompleteSd = await createSignedSdFile(completeSd)
+      logger(`📁 ${filenameCompleteSd} saved`)
+    }
+  } catch (error) {
+    console.error('Next: Upload your did.json and x509CertificateChain.pem to the provided URL and execute the script again to use the Compliance Service.')
   }
 }
 
