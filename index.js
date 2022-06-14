@@ -45,7 +45,7 @@ async function createProof(hash) {
 
 async function verify(jws) {
   const algorithm = 'PS256'
-  const x509 = await jose.importX509(process.env.PUBLIC_KEY, algorithm)
+  const x509 = await jose.importX509(process.env.CERTIFICATE, algorithm)
   const publicKeyJwk = await jose.exportJWK(x509)
 
   const pubkey = await jose.importJWK(publicKeyJwk, 'PS256')
@@ -73,7 +73,7 @@ async function createSignedSdFile(selfDescription, proof) {
 
 async function createDIDFile() {
   const algorithm = 'PS256'
-  const x509 = await jose.importX509(process.env.PUBLIC_KEY, algorithm)
+  const x509 = await jose.importX509(process.env.CERTIFICATE, algorithm)
   const publicKeyJwk = await jose.exportJWK(x509)
   publicKeyJwk.alg = algorithm
 
