@@ -1,11 +1,13 @@
-require('dotenv').config()
+const conf = './config/'
+
+require('dotenv').config({path:conf + '.env'})
 
 const axios = require('axios')
 const crypto = require('crypto')
 const fs = require('fs').promises
 const jose = require('jose')
 
-const { selfDescription } = require('./self-description.json')
+const { selfDescription } = require(conf+'/self-description.json')
 const currentTime = new Date().getTime()
 const BASE_URL = "https://compliance.lab.gaia-x.eu"
 
@@ -64,7 +66,7 @@ async function createSignedSdFile(selfDescription, proof) {
   const status = proof ? "self-signed" : "complete"
   const type = proof ? selfDescription['@type'].split(':')[0] : selfDescription.selfDescriptionCredential.selfDescription['@type'].split(':')[0]
   const data = JSON.stringify(content, null, 2)
-  const filename = `${currentTime}_${status}_${type}.json`
+  const filename = conf+`${currentTime}_${status}_${type}.json`
 
   await fs.writeFile(filename, data)
 
@@ -92,7 +94,7 @@ async function createDIDFile() {
   }
 
   const data = JSON.stringify(did, null, 2)
-  const filename = `${currentTime}_did.json`
+  const filename = conf + `${currentTime}_did.json`
 
   await fs.writeFile(filename, data)
 
