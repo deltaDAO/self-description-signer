@@ -1,15 +1,19 @@
-const conf = './config/'
+const CONF = './config/'
 
-require('dotenv').config({path:conf + '.env'})
+require('dotenv').config({ path: CONF + '.env' })
 
 const axios = require('axios')
 const crypto = require('crypto')
 const fs = require('fs').promises
 const jose = require('jose')
 
-const { selfDescription } = require(conf+'/self-description.json')
-const currentTime = new Date().getTime()
+const { selfDescription } = require(CONF + '/self-description.json')
+const CURRENT_TIME = new Date().getTime()
 const BASE_URL = "https://compliance.lab.gaia-x.eu"
+const OUTPUT_DIR = './output/'
+
+createOutputFolder(OUTPUT_DIR)
+
 
 async function canonize(selfDescription) {
   const URL = BASE_URL + '/api/v1/normalize'
@@ -36,7 +40,7 @@ async function sign(hash) {
 async function createProof(hash) {
   const proof = {
     type: 'JsonWebKey2020',
-    created: new Date(currentTime).toISOString(),
+    created: new Date(CURRENT_TIME).toISOString(),
     proofPurpose: 'assertionMethod',
     verificationMethod: process.env.VERIFICATION_METHOD ?? 'did:web:compliance.lab.gaia-x.eu',
     jws: await sign(hash)
@@ -66,7 +70,7 @@ async function createSignedSdFile(selfDescription, proof) {
   const status = proof ? "self-signed" : "complete"
   const type = proof ? selfDescription['@type'].split(':')[0] : selfDescription.selfDescriptionCredential.selfDescription['@type'].split(':')[0]
   const data = JSON.stringify(content, null, 2)
-  const filename = conf+`${currentTime}_${status}_${type}.json`
+  const filename = OUTPUT_DIR + `${CURRENT_TIME}_${status}_${type}.json`
 
   await fs.writeFile(filename, data)
 
@@ -94,7 +98,7 @@ async function createDIDFile() {
   }
 
   const data = JSON.stringify(did, null, 2)
-  const filename = conf + `${currentTime}_did.json`
+  const filename = OUTPUT_DIR + `${CURRENT_TIME}_did.json`
 
   await fs.writeFile(filename, data)
 
@@ -123,6 +127,14 @@ async function verifySelfDescription(selfDescription) {
   }
 }
 
+async function createOutputFolder(dir) {
+  try {
+    await fs.access(dir)
+  } catch (e) {
+    await fs.mkdir(dir);
+  }
+}
+
 async function main() {
   const canonizedSD = await canonize(selfDescription)
 
@@ -140,9 +152,11 @@ async function main() {
 
   const filenameDid = await createDIDFile()
   logger(`📁 ${filenameDid} saved`, "\n")
-  
+
   // the following code only works if you hosted your created did.json
   try {
+    logger('🔍 Checking Self Description with the Compliance Service...')
+
     const complianceCredential = await signSd(selfDescription, proof)
     logger(complianceCredential ? '🔒 SD signed successfully (compliance service)' : '❌ SD signing failed (compliance service)')
 
@@ -156,7 +170,7 @@ async function main() {
       logger(`📁 ${filenameCompleteSd} saved`)
     }
   } catch (error) {
-    console.error('Next: Upload your did.json and x509CertificateChain.pem to the provided URL and execute the script again to use the Compliance Service.')
+    console.error(error?.response?.data)
   }
 }
 
