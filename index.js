@@ -76,6 +76,7 @@ async function createDIDFile() {
   const x509 = await jose.importX509(process.env.CERTIFICATE, algorithm)
   const publicKeyJwk = await jose.exportJWK(x509)
   publicKeyJwk.alg = algorithm
+  publicKeyJwk.x5u = process.env.X5U_URL
 
   const did = {
     "@context": ["https://www.w3.org/ns/did/v1"],
@@ -84,11 +85,10 @@ async function createDIDFile() {
       {
         "@context": "https://w3c-ccg.github.io/lds-jws2020/contexts/v1/",
         "id": "did:web:compliance.gaia-x.eu#JWK2020-RSA",
-        publicKeyJwk,
-        "x5u": process.env.X5U_URL
+        publicKeyJwk
       }
     ],
-    "assertionMethod": [process.env.VERIFICATION_METHOD + "#JWK2020-RSA",]
+    "assertionMethod": [process.env.VERIFICATION_METHOD + "#JWK2020-RSA"]
   }
 
   const data = JSON.stringify(did, null, 2)
