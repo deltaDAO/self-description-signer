@@ -6,16 +6,16 @@ const crypto = require('crypto')
 const fs = require('fs').promises
 const jose = require('jose')
 
-const { selfDescription } = require(CONF + '/self-description.json')
+const selfDescription = require(CONF + '/self-description.json')
 const CURRENT_TIME = new Date().getTime()
-const BASE_URL = 'https://compliance.lab.gaia-x.eu'
+const BASE_URL = 'http://localhost:3000'
 
 const OUTPUT_DIR = './output/'
 createOutputFolder(OUTPUT_DIR)
 
 async function canonize(selfDescription) {
   const URL = BASE_URL + '/api/v1/normalize'
-  const { data } = await axios.post(URL, { selfDescription })
+  const { data } = await axios.post(URL, selfDescription)
 
   return data
 }
@@ -64,9 +64,9 @@ async function verify(jws) {
 }
 
 async function createSignedSdFile(selfDescription, proof) {
-  const content = proof ? { selfDescription, proof } : selfDescription
+  const content = proof ? { ...selfDescription, proof } : selfDescription
   const status = proof ? 'self-signed' : 'complete'
-  const type = proof ? selfDescription['@type'].split(':')[0] : selfDescription.selfDescriptionCredential.selfDescription['@type'].split(':')[0]
+  const type = proof ? selfDescription['@type'].split(':')[0] : selfDescription.selfDescriptionCredential['@type'].split(':')[0]
   const data = JSON.stringify(content, null, 2)
   const filename = `${OUTPUT_DIR}${CURRENT_TIME}_${status}_${type}.json`
 
@@ -87,8 +87,10 @@ async function createDIDFile() {
     'id': process.env.VERIFICATION_METHOD,
     'verificationMethod': [
       {
-        '@context': 'https://w3c-ccg.github.io/lds-jws2020/contexts/v1/',
         'id': 'did:web:compliance.gaia-x.eu#JWK2020-RSA',
+        "type": "JsonWebKey2020", 
+        "controller" : process.env.verificationMethod,
+        '@context': 'https://w3c-ccg.github.io/lds-jws2020/contexts/v1/',
         publicKeyJwk
       }
     ],
@@ -109,7 +111,7 @@ function logger(...msg) {
 
 async function signSd(selfDescription, proof) {
   const URL = BASE_URL + '/api/v1/sign'
-  const { data } = await axios.post(URL, { selfDescription, proof })
+  const { data } = await axios.post(URL, { ...selfDescription, proof })
 
   return data
 }
@@ -159,7 +161,7 @@ async function main() {
     logger(complianceCredential ? '🔒 SD signed successfully (compliance service)' : '❌ SD signing failed (compliance service)')
 
     if (complianceCredential) {
-      const completeSd = { selfDescriptionCredential: { selfDescription, proof }, complianceCredential: complianceCredential.complianceCredential }
+      const completeSd = { selfDescriptionCredential: { ...selfDescription, proof }, complianceCredential: complianceCredential.complianceCredential }
 
       const verificationResultRemote = await verifySelfDescription(completeSd)
       logger(verificationResultRemote?.conforms === true ? '✅ Verification successful (compliance service)' : '❌ Verification failed (compliance service)')
