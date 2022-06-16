@@ -66,7 +66,7 @@ async function verify(jws) {
 async function createSignedSdFile(selfDescription, proof) {
   const content = proof ? { ...selfDescription, proof } : selfDescription
   const status = proof ? 'self-signed' : 'complete'
-  const type = proof ? selfDescription['@type'].split(':')[0] : selfDescription.selfDescriptionCredential['@type'].split(':')[0]
+  const type = proof ? selfDescription['@type'].find(t => t !== 'VerifiableCredential') : selfDescription.selfDescriptionCredential['@type'].find(t => t !== 'VerifiableCredential')
   const data = JSON.stringify(content, null, 2)
   const filename = `${OUTPUT_DIR}${CURRENT_TIME}_${status}_${type}.json`
 
