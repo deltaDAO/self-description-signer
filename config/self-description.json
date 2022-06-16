@@ -6,7 +6,10 @@
         "@nest"
     ],
     "@id": "https://delta-dao.com/.well-known/participant.json",
-    "@type": "gx-participant:LegalPerson",
+    "@type": [
+        "VerifiableCredential",
+        "LegalPerson"
+    ],
     "credentialSubject": {
         "id": "did:web:delta-dao.com",
         "gx-participant:name": {
