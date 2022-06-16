@@ -9,7 +9,7 @@ const jose = require('jose')
 
 const { selfDescription } = require(CONF + '/self-description.json')
 const CURRENT_TIME = new Date().getTime()
-const BASE_URL = "https://compliance.lab.gaia-x.eu"
+const BASE_URL = 'https://compliance.lab.gaia-x.eu'
 const OUTPUT_DIR = './output/'
 
 createOutputFolder(OUTPUT_DIR)
@@ -67,7 +67,7 @@ async function verify(jws) {
 
 async function createSignedSdFile(selfDescription, proof) {
   const content = proof ? { selfDescription, proof } : selfDescription
-  const status = proof ? "self-signed" : "complete"
+  const status = proof ? 'self-signed' : 'complete'
   const type = proof ? selfDescription['@type'].split(':')[0] : selfDescription.selfDescriptionCredential.selfDescription['@type'].split(':')[0]
   const data = JSON.stringify(content, null, 2)
   const filename = OUTPUT_DIR + `${CURRENT_TIME}_${status}_${type}.json`
@@ -85,16 +85,16 @@ async function createDIDFile() {
   publicKeyJwk.x5u = process.env.X5U_URL
 
   const did = {
-    "@context": ["https://www.w3.org/ns/did/v1"],
-    "id": process.env.VERIFICATION_METHOD,
-    "verificationMethod": [
+    '@context': ['https://www.w3.org/ns/did/v1'],
+    'id': process.env.VERIFICATION_METHOD,
+    'verificationMethod': [
       {
-        "@context": "https://w3c-ccg.github.io/lds-jws2020/contexts/v1/",
-        "id": "did:web:compliance.gaia-x.eu#JWK2020-RSA",
+        '@context': 'https://w3c-ccg.github.io/lds-jws2020/contexts/v1/',
+        'id': 'did:web:compliance.gaia-x.eu#JWK2020-RSA',
         publicKeyJwk
       }
     ],
-    "assertionMethod": [process.env.VERIFICATION_METHOD + "#JWK2020-RSA"]
+    'assertionMethod': [process.env.VERIFICATION_METHOD + '#JWK2020-RSA']
   }
 
   const data = JSON.stringify(did, null, 2)
@@ -106,18 +106,18 @@ async function createDIDFile() {
 }
 
 function logger(...msg) {
-  console.log(msg.join(" "))
+  console.log(msg.join(' '))
 }
 
 async function signSd(selfDescription, proof) {
-  const URL = BASE_URL + "/api/v1/sign"
+  const URL = BASE_URL + '/api/v1/sign'
   const { data } = await axios.post(URL, { selfDescription, proof })
 
   return data
 }
 
 async function verifySelfDescription(selfDescription) {
-  const URL = BASE_URL + "/api/v1/participant/verify/raw"
+  const URL = BASE_URL + '/api/v1/participant/verify/raw'
   try {
     const { data } = await axios.post(URL, selfDescription)
 
@@ -151,7 +151,7 @@ async function main() {
   logger(`📁 ${filenameSignedSd} saved`)
 
   const filenameDid = await createDIDFile()
-  logger(`📁 ${filenameDid} saved`, "\n")
+  logger(`📁 ${filenameDid} saved`, '\n')
 
   // the following code only works if you hosted your created did.json
   try {
