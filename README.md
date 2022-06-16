@@ -8,6 +8,17 @@
 6. Upload this did.json to your domain (e.g. `https://your_domain.com/.well-known/did.json`).
 7. Re-run the script and finally, the compliance service is used to sign the locally signed self description. It signs it if the final result is against the compliance service. The result is stored in a new file called `timestamp_complete_gx-type.json`
 
+# Alternative Usage with Docker
+
+1. Build the container with `docker build -t self-description-signer .`
+2. Update the self description in `self-description.json`.
+3. Create a new `.env` file with `PRIVATE_KEY`, `CERTIFICATE`, `VERIFICATION_METHOD` and `X5U_URL` as properties. 
+4. Run the script with `docker run -it --mount src="$(pwd)/config",target=/usr/src/app/config,type=bind self-description-signer`
+5. In addition, a did.json will be created based on the provided `CERTIFICATE` and `VERIFICATION_METHOD`
+6. Upload this did.json to your domain (e.g. `https://your_domain.com/.well-known/did.json`).
+7. Re-run the script and finally, the compliance service is used to sign the locally signed self description. It signs it if the final result is against the compliance service. The result is stored in a new file called `timestamp_complete_gx-type.json`
+
+
 ## How it Works
 1. The given Self Description is canonized with [URDNA2015](https://json-ld.github.io/rdf-dataset-canonicalization/spec/)
 2. Next the canonized output is hashed with [SHA256](https://json-ld.github.io/rdf-dataset-canonicalization/spec/#dfn-hash-algorithm).
