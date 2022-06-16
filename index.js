@@ -1,5 +1,4 @@
 const CONF = './config/'
-
 require('dotenv').config({ path: CONF + '.env' })
 
 const axios = require('axios')
@@ -10,10 +9,9 @@ const jose = require('jose')
 const { selfDescription } = require(CONF + '/self-description.json')
 const CURRENT_TIME = new Date().getTime()
 const BASE_URL = 'https://compliance.lab.gaia-x.eu'
+
 const OUTPUT_DIR = './output/'
-
 createOutputFolder(OUTPUT_DIR)
-
 
 async function canonize(selfDescription) {
   const URL = BASE_URL + '/api/v1/normalize'
@@ -70,7 +68,7 @@ async function createSignedSdFile(selfDescription, proof) {
   const status = proof ? 'self-signed' : 'complete'
   const type = proof ? selfDescription['@type'].split(':')[0] : selfDescription.selfDescriptionCredential.selfDescription['@type'].split(':')[0]
   const data = JSON.stringify(content, null, 2)
-  const filename = OUTPUT_DIR + `${CURRENT_TIME}_${status}_${type}.json`
+  const filename = `${OUTPUT_DIR}${CURRENT_TIME}_${status}_${type}.json`
 
   await fs.writeFile(filename, data)
 
@@ -98,7 +96,7 @@ async function createDIDFile() {
   }
 
   const data = JSON.stringify(did, null, 2)
-  const filename = OUTPUT_DIR + `${CURRENT_TIME}_did.json`
+  const filename = `${OUTPUT_DIR}${CURRENT_TIME}_did.json`
 
   await fs.writeFile(filename, data)
 
