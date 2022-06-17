@@ -87,10 +87,10 @@ async function createDIDFile() {
     'id': process.env.VERIFICATION_METHOD,
     'verificationMethod': [
       {
-        'id' : process.env.verificationMethod,
+        '@context': 'https://w3c-ccg.github.io/lds-jws2020/contexts/v1/',
+        'id' : process.env.VERIFICATION_METHOD,
         'type': "JsonWebKey2020", 
         'controller': 'did:web:compliance.gaia-x.eu#JWK2020-RSA', 
-        '@context': 'https://w3c-ccg.github.io/lds-jws2020/contexts/v1/',
         publicKeyJwk
       }
     ],
