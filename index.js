@@ -8,7 +8,7 @@ const jose = require('jose')
 
 const selfDescription = require(CONF + '/self-description.json')
 const CURRENT_TIME = new Date().getTime()
-const BASE_URL = 'https://compliance.lab.gaia-x.eu'
+const BASE_URL = 'https://compliance.gaia-x.eu'
 
 const OUTPUT_DIR = './output/'
 createOutputFolder(OUTPUT_DIR)
