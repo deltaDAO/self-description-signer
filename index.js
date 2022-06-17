@@ -11,7 +11,7 @@ const selfDescription = require(SD_PATH)
 const CURRENT_TIME = new Date().getTime()
 const BASE_URL = 'https://compliance.gaia-x.eu'
 
-const OUTPUT_DIR = './output/'
+const OUTPUT_DIR = process.argv.slice(2)[1] || './output/'
 createOutputFolder(OUTPUT_DIR)
 
 async function canonize(selfDescription) {
