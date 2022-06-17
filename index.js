@@ -6,7 +6,8 @@ const crypto = require('crypto')
 const fs = require('fs').promises
 const jose = require('jose')
 
-const selfDescription = require(CONF + '/self-description.json')
+const SD_PATH = process.argv.slice(2)[0] || CONF + 'self-description.json'
+const selfDescription = require(SD_PATH)
 const CURRENT_TIME = new Date().getTime()
 const BASE_URL = 'https://compliance.gaia-x.eu'
 
@@ -136,6 +137,8 @@ async function createOutputFolder(dir) {
 }
 
 async function main() {
+  logger(`📝 Loaded ${SD_PATH}`)
+
   const canonizedSD = await canonize(selfDescription)
 
   const hash = sha256(canonizedSD)
