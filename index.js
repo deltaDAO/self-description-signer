@@ -173,7 +173,8 @@ async function main() {
       logger(`📁 ${filenameCompleteSd} saved`)
     }
   } catch (error) {
-    console.error(error?.response?.data)
+    console.dir("Something went wrong:")
+    console.dir(error?.response?.data, { depth: null, colors: true });
   }
 }
 
