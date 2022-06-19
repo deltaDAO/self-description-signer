@@ -14,6 +14,11 @@ const BASE_URL = 'https://compliance.gaia-x.eu'
 const OUTPUT_DIR = process.argv.slice(2)[1] || './output/'
 createOutputFolder(OUTPUT_DIR)
 
+const TYPE_API_ATH = {
+  'ServiceOfferingExperimental': 'service-offering',
+  'LegalPerson': 'participant'
+}
+
 async function canonize(selfDescription) {
   const URL = BASE_URL + '/api/v1/normalize'
   const { data } = await axios.post(URL, selfDescription)
@@ -89,9 +94,9 @@ async function createDIDFile() {
     'verificationMethod': [
       {
         '@context': 'https://w3c-ccg.github.io/lds-jws2020/contexts/v1/',
-        'id' : process.env.VERIFICATION_METHOD,
-        'type': "JsonWebKey2020", 
-        'controller': 'did:web:compliance.gaia-x.eu#JWK2020-RSA', 
+        'id': process.env.VERIFICATION_METHOD,
+        'type': "JsonWebKey2020",
+        'controller': 'did:web:compliance.gaia-x.eu#JWK2020-RSA',
         publicKeyJwk
       }
     ],
@@ -118,14 +123,12 @@ async function signSd(selfDescription, proof) {
 }
 
 async function verifySelfDescription(selfDescription) {
-  const URL = BASE_URL + '/api/v1/participant/verify/raw'
-  try {
-    const { data } = await axios.post(URL, selfDescription)
+  const credentialType = selfDescription.selfDescriptionCredential['@type'].find(el => el !== 'VerifiableCredential')
+  const type = TYPE_API_ATH[credentialType] || TYPE_API_ATH.LegalPerson
+  const URL = `${BASE_URL}/api/v1/${type}/verify/raw`
+  const { data } = await axios.post(URL, selfDescription)
 
-    return data
-  } catch (error) {
-    return {}
-  }
+  return data
 }
 
 async function createOutputFolder(dir) {
@@ -139,25 +142,25 @@ async function createOutputFolder(dir) {
 async function main() {
   logger(`📝 Loaded ${SD_PATH}`)
 
-  const canonizedSD = await canonize(selfDescription)
-
-  const hash = sha256(canonizedSD)
-  logger(`📈 Hashed canonized SD ${hash}`)
-
-  const proof = await createProof(hash)
-  logger(proof ? '🔒 SD signed successfully (local)' : '❌ SD signing failed (local)')
-
-  const verificationResult = await verify(proof.jws.replace('..', `.${hash}.`))
-  logger(verificationResult?.content === hash ? '✅ Verification successful (local)' : '❌ Verification failed (local)')
-
-  const filenameSignedSd = await createSignedSdFile(selfDescription, proof)
-  logger(`📁 ${filenameSignedSd} saved`)
-
-  const filenameDid = await createDIDFile()
-  logger(`📁 ${filenameDid} saved`, '\n')
-
-  // the following code only works if you hosted your created did.json
   try {
+    const canonizedSD = await canonize(selfDescription)
+
+    const hash = sha256(canonizedSD)
+    logger(`📈 Hashed canonized SD ${hash}`)
+
+    const proof = await createProof(hash)
+    logger(proof ? '🔒 SD signed successfully (local)' : '❌ SD signing failed (local)')
+
+    const verificationResult = await verify(proof.jws.replace('..', `.${hash}.`))
+    logger(verificationResult?.content === hash ? '✅ Verification successful (local)' : '❌ Verification failed (local)')
+
+    const filenameSignedSd = await createSignedSdFile(selfDescription, proof)
+    logger(`📁 ${filenameSignedSd} saved`)
+
+    const filenameDid = await createDIDFile()
+    logger(`📁 ${filenameDid} saved`, '\n')
+
+    // the following code only works if you hosted your created did.json
     logger('🔍 Checking Self Description with the Compliance Service...')
 
     const complianceCredential = await signSd(selfDescription, proof)
@@ -167,7 +170,7 @@ async function main() {
       const completeSd = { selfDescriptionCredential: { ...selfDescription, proof }, complianceCredential: complianceCredential.complianceCredential }
 
       const verificationResultRemote = await verifySelfDescription(completeSd)
-      logger(verificationResultRemote?.conforms === true ? '✅ Verification successful (compliance service)' : '❌ Verification failed (compliance service)')
+      logger(verificationResultRemote?.conforms === true ? '✅ Verification successful (compliance service)' : `❌ Verification failed (compliance service): ${verificationResultRemote.conforms}`)
 
       const filenameCompleteSd = await createSignedSdFile(completeSd)
       logger(`📁 ${filenameCompleteSd} saved`)
