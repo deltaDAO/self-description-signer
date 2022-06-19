@@ -7,3 +7,4 @@ node_modules/
 *DS_Store
 config/*.env
 config/self-description.json
+config/self-description.json
