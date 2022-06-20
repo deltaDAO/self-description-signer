@@ -8,3 +8,5 @@ node_modules/
 config/*.env
 config/self-description.json
 config/self-description.json
+config/example.env
+config/self-description.json
