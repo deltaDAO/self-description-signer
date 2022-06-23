@@ -2,7 +2,11 @@
 node_modules/
 *.pem
 *.json
-!self-description.json
 !package.json
 !package-lock.json
 *DS_Store
+config/*.env
+config/self-description.json
+config/self-description.json
+config/example.env
+config/self-description.json

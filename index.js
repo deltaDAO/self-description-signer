@@ -1,17 +1,27 @@
-require('dotenv').config()
+const CONF = './config/'
+require('dotenv').config({ path: CONF + '.env' })
 
 const axios = require('axios')
 const crypto = require('crypto')
 const fs = require('fs').promises
 const jose = require('jose')
 
-const { selfDescription } = require('./self-description.json')
-const currentTime = new Date().getTime()
-const BASE_URL = "https://compliance.lab.gaia-x.eu"
+const SD_PATH = process.argv.slice(2)[0] || CONF + 'self-description.json'
+const selfDescription = require(SD_PATH)
+const CURRENT_TIME = new Date().getTime()
+const BASE_URL = 'https://compliance.gaia-x.eu'
+
+const OUTPUT_DIR = process.argv.slice(2)[1] || './output/'
+createOutputFolder(OUTPUT_DIR)
+
+const TYPE_API_ATH = {
+  'ServiceOfferingExperimental': 'service-offering',
+  'LegalPerson': 'participant'
+}
 
 async function canonize(selfDescription) {
   const URL = BASE_URL + '/api/v1/normalize'
-  const { data } = await axios.post(URL, { selfDescription })
+  const { data } = await axios.post(URL, selfDescription)
 
   return data
 }
@@ -34,7 +44,7 @@ async function sign(hash) {
 async function createProof(hash) {
   const proof = {
     type: 'JsonWebKey2020',
-    created: new Date(currentTime).toISOString(),
+    created: new Date(CURRENT_TIME).toISOString(),
     proofPurpose: 'assertionMethod',
     verificationMethod: process.env.VERIFICATION_METHOD ?? 'did:web:compliance.lab.gaia-x.eu',
     jws: await sign(hash)
@@ -60,11 +70,11 @@ async function verify(jws) {
 }
 
 async function createSignedSdFile(selfDescription, proof) {
-  const content = proof ? { selfDescription, proof } : selfDescription
-  const status = proof ? "self-signed" : "complete"
-  const type = proof ? selfDescription['@type'].split(':')[0] : selfDescription.selfDescriptionCredential.selfDescription['@type'].split(':')[0]
+  const content = proof ? { ...selfDescription, proof } : selfDescription
+  const status = proof ? 'self-signed' : 'complete'
+  const type = proof ? selfDescription['@type'].find(t => t !== 'VerifiableCredential') : selfDescription.selfDescriptionCredential['@type'].find(t => t !== 'VerifiableCredential')
   const data = JSON.stringify(content, null, 2)
-  const filename = `${currentTime}_${status}_${type}.json`
+  const filename = `${OUTPUT_DIR}${CURRENT_TIME}_${status}_${type}.json`
 
   await fs.writeFile(filename, data)
 
@@ -76,23 +86,25 @@ async function createDIDFile() {
   const x509 = await jose.importX509(process.env.CERTIFICATE, algorithm)
   const publicKeyJwk = await jose.exportJWK(x509)
   publicKeyJwk.alg = algorithm
+  publicKeyJwk.x5u = process.env.X5U_URL
 
   const did = {
-    "@context": ["https://www.w3.org/ns/did/v1"],
-    "id": process.env.VERIFICATION_METHOD,
-    "verificationMethod": [
+    '@context': ['https://www.w3.org/ns/did/v1'],
+    'id': process.env.VERIFICATION_METHOD,
+    'verificationMethod': [
       {
-        "@context": "https://w3c-ccg.github.io/lds-jws2020/contexts/v1/",
-        "id": process.env.VERIFICATION_METHOD + "#JWK2020-RSA",
-        publicKeyJwk,
-        "x5u": process.env.X5U_URL
+        '@context': 'https://w3c-ccg.github.io/lds-jws2020/contexts/v1/',
+        'id': process.env.VERIFICATION_METHOD,
+        'type': "JsonWebKey2020",
+        'controller': 'did:web:compliance.gaia-x.eu#JWK2020-RSA',
+        publicKeyJwk
       }
     ],
-    "assertionMethod": [process.env.VERIFICATION_METHOD + "#JWK2020-RSA",]
+    'assertionMethod': [process.env.VERIFICATION_METHOD + '#JWK2020-RSA']
   }
 
   const data = JSON.stringify(did, null, 2)
-  const filename = `${currentTime}_did.json`
+  const filename = `${OUTPUT_DIR}${CURRENT_TIME}_did.json`
 
   await fs.writeFile(filename, data)
 
@@ -100,61 +112,72 @@ async function createDIDFile() {
 }
 
 function logger(...msg) {
-  console.log(msg.join(" "))
+  console.log(msg.join(' '))
 }
 
 async function signSd(selfDescription, proof) {
-  const URL = BASE_URL + "/api/v1/sign"
-  const { data } = await axios.post(URL, { selfDescription, proof })
+  const URL = BASE_URL + '/api/v1/sign'
+  const { data } = await axios.post(URL, { ...selfDescription, proof })
 
   return data
 }
 
 async function verifySelfDescription(selfDescription) {
-  const URL = BASE_URL + "/api/v1/participant/verify/raw"
-  try {
-    const { data } = await axios.post(URL, selfDescription)
+  const credentialType = selfDescription.selfDescriptionCredential['@type'].find(el => el !== 'VerifiableCredential')
+  const type = TYPE_API_ATH[credentialType] || TYPE_API_ATH.LegalPerson
+  const URL = `${BASE_URL}/api/v1/${type}/verify/raw`
+  const { data } = await axios.post(URL, selfDescription)
 
-    return data
-  } catch (error) {
-    return {}
+  return data
+}
+
+async function createOutputFolder(dir) {
+  try {
+    await fs.access(dir)
+  } catch (e) {
+    await fs.mkdir(dir);
   }
 }
 
 async function main() {
-  const canonizedSD = await canonize(selfDescription)
+  logger(`📝 Loaded ${SD_PATH}`)
 
-  const hash = sha256(canonizedSD)
-  logger(`📈 Hashed canonized SD ${hash}`)
-
-  const proof = await createProof(hash)
-  logger(proof ? '🔒 SD signed successfully (local)' : '❌ SD signing failed (local)')
-
-  const verificationResult = await verify(proof.jws.replace('..', `.${hash}.`))
-  logger(verificationResult?.content === hash ? '✅ Verification successful (local)' : '❌ Verification failed (local)')
-
-  const filenameSignedSd = await createSignedSdFile(selfDescription, proof)
-  logger(`📁 ${filenameSignedSd} saved`)
-
-  const filenameDid = await createDIDFile()
-  logger(`📁 ${filenameDid} saved`, "\n")
-  
-  // the following code only works if you hosted your created did.json
   try {
+    const canonizedSD = await canonize(selfDescription)
+
+    const hash = sha256(canonizedSD)
+    logger(`📈 Hashed canonized SD ${hash}`)
+
+    const proof = await createProof(hash)
+    logger(proof ? '🔒 SD signed successfully (local)' : '❌ SD signing failed (local)')
+
+    const verificationResult = await verify(proof.jws.replace('..', `.${hash}.`))
+    logger(verificationResult?.content === hash ? '✅ Verification successful (local)' : '❌ Verification failed (local)')
+
+    const filenameSignedSd = await createSignedSdFile(selfDescription, proof)
+    logger(`📁 ${filenameSignedSd} saved`)
+
+    const filenameDid = await createDIDFile()
+    logger(`📁 ${filenameDid} saved`, '\n')
+
+    // the following code only works if you hosted your created did.json
+    logger('🔍 Checking Self Description with the Compliance Service...')
+
     const complianceCredential = await signSd(selfDescription, proof)
     logger(complianceCredential ? '🔒 SD signed successfully (compliance service)' : '❌ SD signing failed (compliance service)')
 
     if (complianceCredential) {
-      const completeSd = { selfDescriptionCredential: { selfDescription, proof }, complianceCredential: complianceCredential.complianceCredential }
+      const completeSd = { selfDescriptionCredential: { ...selfDescription, proof }, complianceCredential: complianceCredential.complianceCredential }
 
       const verificationResultRemote = await verifySelfDescription(completeSd)
-      logger(verificationResultRemote?.conforms === true ? '✅ Verification successful (compliance service)' : '❌ Verification failed (compliance service)')
+      logger(verificationResultRemote?.conforms === true ? '✅ Verification successful (compliance service)' : `❌ Verification failed (compliance service): ${verificationResultRemote.conforms}`)
 
       const filenameCompleteSd = await createSignedSdFile(completeSd)
       logger(`📁 ${filenameCompleteSd} saved`)
     }
   } catch (error) {
-    console.error('Next: Upload your did.json and x509CertificateChain.pem to the provided URL and execute the script again to use the Compliance Service.')
+    console.dir("Something went wrong:")
+    console.dir(error?.response?.data, { depth: null, colors: true });
   }
 }
 

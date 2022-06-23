@@ -1,0 +1,74 @@
+{
+    "@context": [
+        "http://www.w3.org/ns/shacl#",
+        "http://www.w3.org/2001/XMLSchema#",
+        "http://w3id.org/gaia-x/participant#",
+        "@nest"
+    ],
+    "@id": "https://delta-dao.com/.well-known/participant.json",
+    "@type": [
+        "VerifiableCredential",
+        "LegalPerson"
+    ],
+    "credentialSubject": {
+        "id": "did:web:delta-dao.com",
+        "gx-participant:name": {
+            "@value": "deltaDAO AG",
+            "@type": "xsd:string"
+        },
+        "gx-participant:legalName": {
+            "@value": "deltaDAO AG",
+            "@type": "xsd:string"
+        },
+        "gx-participant:registrationNumber": {
+            "@value": "DEK1101R.HRB170364",
+            "@type": "xsd:string"
+        },
+        "gx-participant:leiCode": {
+            "@value": "391200FJBNU0YW987L26",
+            "@type": "xsd:string"
+        },
+        "gx-participant:ethereumAddress": {
+            "@value": "0x4C84a36fCDb7Bc750294A7f3B5ad5CA8F74C4A52",
+            "@type": "xsd:string"
+        },
+        "gx-participant:headquarterAddress": {
+            "@type": "gx-participant:Address",
+            "gx-participant:country": {
+                "@value": "DE",
+                "@type": "xsd:string"
+            },
+            "gx-participant:street-address": {
+                "@value": "Geibelstraße 46b",
+                "@type": "xsd:string"
+            },
+            "gx-participant:postal-code": {
+                "@value": "22303",
+                "@type": "xsd:string"
+            },
+            "gx-participant:locality": {
+                "@value": "Hamburg",
+                "@type": "xsd:string"
+            }
+        },
+        "gx-participant:legalAddress": {
+            "@type": "gx-participant:Address",
+            "gx-participant:country": {
+                "@value": "DE",
+                "@type": "xsd:string"
+            },
+            "gx-participant:street-address": {
+                "@value": "Geibelstraße 46b",
+                "@type": "xsd:string"
+            },
+            "gx-participant:postal-code": {
+                "@value": "22303",
+                "@type": "xsd:string"
+            },
+            "gx-participant:locality": {
+                "@value": "Hamburg",
+                "@type": "xsd:string"
+            }
+        }
+    }
+}
