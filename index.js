@@ -20,7 +20,7 @@ const TYPE_API_ATH = {
 }
 
 async function canonize(selfDescription) {
-  const URL = BASE_URL + '/api/v1/normalize'
+  const URL = BASE_URL + '/api/v2204/normalize'
   const { data } = await axios.post(URL, selfDescription)
 
   return data
@@ -116,7 +116,7 @@ function logger(...msg) {
 }
 
 async function signSd(selfDescription, proof) {
-  const URL = BASE_URL + '/api/v1/sign'
+  const URL = BASE_URL + '/api/v2204/sign'
   const { data } = await axios.post(URL, { ...selfDescription, proof })
 
   return data
@@ -125,7 +125,7 @@ async function signSd(selfDescription, proof) {
 async function verifySelfDescription(selfDescription) {
   const credentialType = selfDescription.selfDescriptionCredential['@type'].find(el => el !== 'VerifiableCredential')
   const type = TYPE_API_ATH[credentialType] || TYPE_API_ATH.LegalPerson
-  const URL = `${BASE_URL}/api/v1/${type}/verify/raw`
+  const URL = `${BASE_URL}/api/v2204/${type}/verify/raw`
   const { data } = await axios.post(URL, selfDescription)
 
   return data
